@@ -18,7 +18,7 @@ Currently, this project is a standalone Python utility. There is no formal test 
     --parallel
   ```
 - **Linting:** Use standard PEP 8 guidelines. If you introduce a linter, prefer `ruff`.
-- **Testing:** No tests exist. If adding tests, use `pytest` and place them in a `tests/` directory.
+- **Testing:** We use `pytest` for unit testing. Tests are located in the `tests/` directory and use SQLite for mocking database connections. Run tests with `python3 -m pytest tests/`.
 
 ## 2. Code Style & Conventions
 
@@ -52,6 +52,7 @@ Currently, this project is a standalone Python utility. There is no formal test 
 - **Turbodbc Setup (macOS):** Requires `unixodbc`, `apache-arrow`, and `boost`. Install via Homebrew and use `--no-build-isolation` with `pip` or `uv`.
 - **Performance:** Turbodbc + Arrow can reduce extraction time by ~80% compared to SQLAlchemy/Pandas by bypassing Python object conversion.
 - **ADBC Ingestion:** Fastest for Postgres. Use `create_append` or `append` modes. For maximum speed, pre-create destination tables as `UNLOGGED` to bypass WAL.
+- **Turbodbc Chunk Sizes:** Note that `turbodbc` internally halves the requested `--chunk-size` (e.g., requesting 250,000 yields 125,000 row batches). The optimal chunk size appears to be **125,000 rows** (requesting 250,000). Excessively large chunks (like 250,000 rows, requesting 500,000) heavily degrade extraction performance due to C++ memory allocation and Arrow conversion overhead.
 
 ## 3. Architecture Context
 
@@ -64,3 +65,4 @@ LightningEL is a high-performance "Extract-Load" tool designed to move data betw
 ## 4. Existing Rules
 - No `.cursorrules` or `.github/copilot-instructions.md` found in this repository.
 - Follow the patterns established in `lightning_el.py`.
+- **Bash Tool Timeouts:** When using the Bash tool to execute `lightning_el.py` on large datasets, explicitly set the `timeout` parameter to 10 minutes (600,000 milliseconds) to prevent the command from timing out prematurely.
