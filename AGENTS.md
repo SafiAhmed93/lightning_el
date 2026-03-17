@@ -12,7 +12,6 @@ LightningEL is a high-performance "Extract-Load" pipeline engineered to move dat
 - **`lightning_el.py`**: The core ETL utility supporting `sqlalchemy`, `turbodbc`, and `adbc`. Uses multithreading to overlap network I/O.
 - **`transfer_all.py`**: Batch automation script that manages bulk table transfers. Relies on a local `transfer_tracking.db` SQLite database to track state.
 - **`ddgs_mcp.py`**: A Model Context Protocol (MCP) server leveraging DuckDuckGo for search tools.
-- **`email_sender_container/`**: A containerized microservice for email dispatch.
 
 ### Architecture Context
 - **Extractors:** Must yield `pyarrow.Table` or `pyarrow.RecordBatch`.
