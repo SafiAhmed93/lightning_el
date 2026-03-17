@@ -30,6 +30,16 @@ def update_status(id, status):
     conn.commit()
     conn.close()
 
+def truncate_status():
+    """Truncates the transfer_status table upon successful completion of all jobs."""
+    conn = sqlite3.connect('transfer_tracking.db')
+    c = conn.cursor()
+    c.execute('DELETE FROM transfer_status')
+    # reset the autoincrement counter
+    c.execute('DELETE FROM sqlite_sequence WHERE name="transfer_status"')
+    conn.commit()
+    conn.close()
+
 def main():
     pending_tables = get_pending_tables()
     
@@ -166,6 +176,14 @@ def main():
             print(f"Failed to process {source_table}. Status remains 0.")
 
     print("\\nAll tables processed.")
+    
+    # Check if any tables failed by seeing if there are pending tables left
+    remaining_tables = get_pending_tables()
+    if not remaining_tables:
+        print("\\nAll transfers completed successfully! Truncating transfer tracking table.")
+        truncate_status()
+    else:
+        print(f"\\nWarning: {len(remaining_tables)} tables failed to transfer. Transfer tracking table will not be truncated.")
 
 if __name__ == "__main__":
     main()
