@@ -17,6 +17,13 @@ def get_adbc_connection(driver_name: str, conn_str: str):
     """Dynamically load and return an ADBC connection based on the driver name."""
     try:
         module = importlib.import_module(f"{driver_name}.dbapi")
+        if driver_name == "adbc_driver_bigquery":
+            import json
+            try:
+                db_kwargs = json.loads(conn_str)
+                return module.connect(db_kwargs=db_kwargs)
+            except json.JSONDecodeError:
+                pass
         return module.connect(conn_str)
     except ImportError:
         raise ValueError(f"ADBC driver '{driver_name}' not installed. Try running: pip install {driver_name}")
