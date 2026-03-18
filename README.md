@@ -96,7 +96,12 @@ python3 lightning_el.py \
 
 ## 🐳 Docker Deployment
 
-For environments where installing C++ dependencies (like `turbodbc` and `pyarrow`) natively is difficult (such as ARM64 Macs), LightningEL includes a highly-optimized Docker container. The container uses a `mambaforge` base to pull pre-compiled binaries via conda-forge alongside the Microsoft SQL Server ODBC 18 drivers.
+For environments where installing C++ dependencies (like `turbodbc` and `pyarrow`) natively is difficult (such as ARM64 Macs), LightningEL includes a highly-optimized Docker container. 
+
+The container uses a `mambaforge` base to pull pre-compiled binaries via conda-forge and is specifically built for `linux/amd64`. It comes pre-installed with the following ODBC drivers out-of-the-box:
+* **Microsoft SQL Server** (`ODBC Driver 18 for SQL Server`)
+* **SAP HANA** (`HDBODBC`)
+* **PostgreSQL ADBC Driver** (for Arrow-native loading)
 
 ### 1. Build the Container
 ```bash
@@ -106,17 +111,18 @@ docker build -t lightning_el:latest .
 ### 2. Run via Docker
 When connecting to databases running on your host machine from within the container, use the `--add-host host.docker.internal:host-gateway` flag.
 
+**Example: SAP HANA to PostgreSQL**
 ```bash
 docker run --rm --add-host host.docker.internal:host-gateway lightning_el:latest python3 lightning_el.py \
   --source-engine turbodbc \
-  --source-conn-str "Driver={ODBC Driver 18 for SQL Server};Server=host.docker.internal,1433;Database=TestDB;Uid=SA;Pwd=SuperStrong!Pass123;TrustServerCertificate=yes;" \
-  --source-schema-name "dbo" \
-  --source-table-name "TestTable" \
+  --source-conn-str "Driver={HDBODBC};ServerNode=host.docker.internal:39015;UID=SYSTEM;PWD=manager;" \
+  --source-schema-name "MY_SCHEMA" \
+  --source-table-name "MY_TABLE" \
   --dest-engine adbc \
-  --dest-conn-str "postgresql://postgres:mysecretpassword@host.docker.internal:5432/postgres" \
+  --dest-conn-str "postgresql://postgres:password@host.docker.internal:5432/postgres" \
   --dest-adbc-driver "adbc_driver_postgresql" \
   --dest-schema-name "public" \
-  --dest-table-name "TestTable" \
+  --dest-table-name "MY_TABLE" \
   --create-unlogged \
   --parallel
 ```
