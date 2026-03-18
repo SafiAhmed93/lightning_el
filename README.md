@@ -96,24 +96,42 @@ python3 lightning_el.py \
 
 ## 🐳 Docker Deployment
 
-For environments where installing C++ dependencies (like `turbodbc` and `pyarrow`) natively is difficult (such as ARM64 Macs), LightningEL includes a highly-optimized Docker container. 
+For environments where installing C++ dependencies (like `turbodbc` and `pyarrow`) natively is difficult, LightningEL includes a highly-optimized, **cross-platform Docker container**.
 
-The container uses a `mambaforge` base to pull pre-compiled binaries via conda-forge and is specifically built for `linux/amd64`. It comes pre-installed with the following ODBC drivers out-of-the-box:
+The container uses a `mambaforge` base to pull pre-compiled binaries via conda-forge. It is **strictly built for `linux/amd64`**. This means it runs natively at full bare-metal speeds on x64 Linux/Windows environments, and relies on Rosetta 2 emulation to run seamlessly on ARM64 Apple Silicon (M1/M2/M3).
+
+It comes pre-installed with the following ODBC drivers out-of-the-box:
 * **Microsoft SQL Server** (`ODBC Driver 18 for SQL Server`)
-* **SAP HANA** (`HDBODBC`)
+* **SAP HANA** (`HDBODBC` - Note: SAP does not provide ARM64 drivers, which is why this container is locked to `amd64`)
 * **PostgreSQL ADBC Driver** (for Arrow-native loading)
 
 ### 1. Build the Container
 ```bash
-docker build -t lightning_el:latest .
+docker build --platform=linux/amd64 -t lightning_el:latest .
 ```
 
 ### 2. Run via Docker
-When connecting to databases running on your host machine from within the container, use the `--add-host host.docker.internal:host-gateway` flag.
+When connecting to databases running on your host machine from within the container, use the `--add-host host.docker.internal:host-gateway` flag. Always specify `--platform=linux/amd64` to avoid architecture mismatch warnings.
 
-**Example: SAP HANA to PostgreSQL**
+**Example 1: High-Speed SQL Server to PostgreSQL (e.g. 9.5 Million row NYC Taxi Data in ~25s)**
 ```bash
-docker run --rm --add-host host.docker.internal:host-gateway lightning_el:latest python3 lightning_el.py \
+docker run --rm --platform=linux/amd64 --add-host host.docker.internal:host-gateway lightning_el:latest python3 lightning_el.py \
+  --source-engine turbodbc \
+  --source-conn-str "Driver={ODBC Driver 18 for SQL Server};Server=host.docker.internal,1433;Database=TaxiDB;Uid=SA;Pwd=SuperStrong!Pass123;TrustServerCertificate=yes;" \
+  --source-schema-name "dbo" \
+  --source-table-name "YellowTaxiData" \
+  --dest-engine adbc \
+  --dest-conn-str "postgresql://postgres:mysecretpassword@host.docker.internal:5432/postgres" \
+  --dest-adbc-driver "adbc_driver_postgresql" \
+  --dest-schema-name "public" \
+  --dest-table-name "YellowTaxiData" \
+  --create-unlogged \
+  --parallel
+```
+
+**Example 2: SAP HANA to PostgreSQL**
+```bash
+docker run --rm --platform=linux/amd64 --add-host host.docker.internal:host-gateway lightning_el:latest python3 lightning_el.py \
   --source-engine turbodbc \
   --source-conn-str "Driver={HDBODBC};ServerNode=host.docker.internal:39015;UID=SYSTEM;PWD=manager;" \
   --source-schema-name "MY_SCHEMA" \
