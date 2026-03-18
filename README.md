@@ -94,6 +94,35 @@ python3 lightning_el.py \
 
 ---
 
+## 🐳 Docker Deployment
+
+For environments where installing C++ dependencies (like `turbodbc` and `pyarrow`) natively is difficult (such as ARM64 Macs), LightningEL includes a highly-optimized Docker container. The container uses a `mambaforge` base to pull pre-compiled binaries via conda-forge alongside the Microsoft SQL Server ODBC 18 drivers.
+
+### 1. Build the Container
+```bash
+docker build -t lightning_el:latest .
+```
+
+### 2. Run via Docker
+When connecting to databases running on your host machine from within the container, use the `--add-host host.docker.internal:host-gateway` flag.
+
+```bash
+docker run --rm --add-host host.docker.internal:host-gateway lightning_el:latest python3 lightning_el.py \
+  --source-engine turbodbc \
+  --source-conn-str "Driver={ODBC Driver 18 for SQL Server};Server=host.docker.internal,1433;Database=TestDB;Uid=SA;Pwd=SuperStrong!Pass123;TrustServerCertificate=yes;" \
+  --source-schema-name "dbo" \
+  --source-table-name "TestTable" \
+  --dest-engine adbc \
+  --dest-conn-str "postgresql://postgres:mysecretpassword@host.docker.internal:5432/postgres" \
+  --dest-adbc-driver "adbc_driver_postgresql" \
+  --dest-schema-name "public" \
+  --dest-table-name "TestTable" \
+  --create-unlogged \
+  --parallel
+```
+
+---
+
 ## 🤖 Batch Automation
 
 The repository includes a batch automation script, `transfer_all.py`, designed to manage bulk table transfers. 
