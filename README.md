@@ -145,6 +145,22 @@ docker run --rm --platform=linux/amd64 --add-host host.docker.internal:host-gate
   --parallel
 ```
 
+### 3. Pulling from Azure Container Registry
+If you have pushed this image to an Azure Container Registry (ACR), you can easily pull it onto any machine (Windows x64, Ubuntu Server, or Mac) by following these steps:
+
+1. **Log in to the Azure Container Registry** using the Azure CLI:
+   ```bash
+   az acr login --name pricelistregistry
+   ```
+2. **Pull the container image:**
+   ```bash
+   docker pull pricelistregistry.azurecr.io/lightning_el:latest
+   ```
+3. **Execute the pipeline** directly from the pulled image:
+   ```bash
+   docker run --rm --platform=linux/amd64 pricelistregistry.azurecr.io/lightning_el:latest python3 lightning_el.py --help
+   ```
+
 ---
 
 ## 🤖 Batch Automation
